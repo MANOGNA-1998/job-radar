@@ -1,0 +1,8 @@
+node_modules
+__pycache__
+.pytest_cache
+.env
+.vercel
+*.pyc
+.venv
+dry-run.txt

@@ -1,0 +1,48 @@
+# What counts as a job for Manogna. Edit this file to change matching; nothing else needs touching.
+# Title tiers come from the roles you have actually tailored resumes for. The first match wins.
+title_tiers:
+  - {label: "Applied AI", points: 50, pattern: "applied ai|applied gen|ai applied|applied llm"}
+  - {label: "AI Engineer", points: 47, pattern: "\\bai\\b.*\\b(engineer|engineering|developer|sde)\\b|\\b(engineer|engineering|developer|sde)\\b.*\\b(ai|genai|llm)\\b|generative ai|\\bgenai\\b|\\bllm\\b|agentic|ai agent|member of technical staff"}
+  - {label: "Forward Deployed", points: 45, pattern: "forward[- ]deployed.*(engineer|developer|\\bai\\b)"}
+  - {label: "Applied ML", points: 42, pattern: "machine learning|\\bml\\b|\\bmle\\b|applied scientist|research engineer|ai/ml|ml/ai"}
+  - {label: "Software Engineer", points: 28, pattern: "software (development )?engineer|software developer|\\bsde\\b|\\bswe\\b|back[- ]?end|platform engineer|product engineer|full[- ]?stack|python developer|gtm engineer|distributed systems|infrastructure engineer"}
+  - {label: "Data Engineer", points: 16, pattern: "data engineer|data platform"}
+
+# A title containing any of these is dropped, even if a tier matches.
+exclude_titles: "\\bintern(ship)?\\b|\\bco-?op\\b|(?<!technical )\\bstaff\\b|\\bprincipal\\b|\\bmanager\\b|\\bdirector\\b|\\bhead of\\b|\\bvice president\\b|\\bvp\\b|\\bdistinguished\\b|\\bfellow\\b|\\brecruit|\\bsales\\b|\\baccount exec|\\bios\\b|\\bandroid\\b|\\bembedded\\b|\\bfirmware\\b|\\bhardware\\b|\\bqa\\b|\\bsdet\\b|\\btest engineer\\b|\\bcontract(or)?\\b|product (manag|design)|\\bgrc\\b|\\bsilicon\\b|\\bfront[- ]?end\\b"
+
+# Skills from your resumes. Points add up and stop at skills_cap.
+skills_cap: 28
+skills:
+  - {name: "LangGraph", points: 5, pattern: "langgraph"}
+  - {name: "RAG", points: 5, pattern: "\\brag\\b|retrieval[- ]augmented"}
+  - {name: "agents", points: 4, pattern: "\\bagents?\\b|agentic|multi-agent"}
+  - {name: "LLMs", points: 4, pattern: "\\bllms?\\b|large language model|generative ai|\\bgenai\\b"}
+  - {name: "evals", points: 4, pattern: "\\bevals?\\b|llm evaluation|model evaluation|evaluation framework"}
+  - {name: "LangChain", points: 3, pattern: "langchain"}
+  - {name: "MCP", points: 3, pattern: "\\bmcp\\b|model context protocol"}
+  - {name: "fine-tuning", points: 3, pattern: "fine[- ]tun"}
+  - {name: "vector search", points: 3, pattern: "vector (search|database|db|store)|pinecone|pgvector|weaviate|embeddings"}
+  - {name: "PyTorch", points: 3, pattern: "pytorch"}
+  - {name: "Python", points: 3, pattern: "\\bpython\\b"}
+  - {name: "MLflow", points: 2, pattern: "mlflow"}
+  - {name: "FastAPI", points: 2, pattern: "fastapi"}
+  - {name: "distributed systems", points: 3, pattern: "distributed systems|microservices"}
+  - {name: "Kubernetes", points: 2, pattern: "kubernetes|\\bk8s\\b"}
+  - {name: "Kafka", points: 2, pattern: "\\bkafka\\b"}
+  - {name: "Airflow", points: 1, pattern: "\\bairflow\\b"}
+  - {name: "Docker", points: 1, pattern: "\\bdocker\\b"}
+  - {name: "AWS", points: 1, pattern: "\\baws\\b"}
+  - {name: "Postgres", points: 1, pattern: "postgres"}
+  - {name: "Redis", points: 1, pattern: "\\bredis\\b"}
+  - {name: "Java", points: 1, pattern: "\\bjava\\b"}
+
+location_points: {nyc: 12, remote: 10, other_us: 5, unknown: 3}
+
+# Jobs asking for up to this many years count as a full match.
+years: {comfortable: 5, stretch: 7}
+
+# Below this score a job is not stored.
+min_score: 30
+# Jobs older than this are ignored when first found. Fresh roles are the point.
+max_age_days: 21

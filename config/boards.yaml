@@ -1,0 +1,55 @@
+# Company job boards to watch. A wrong slug is harmless: it shows up under "boards not responding" on
+# the dashboard, and the collector tries the other two systems on its own in case the company moved.
+# More boards get added automatically when LinkedIn alerts mention a company that has a matching board.
+greenhouse: [anthropic, stripe, databricks, scaleai, figma, airbnb, lyft, discord, robinhood, coinbase, cloudflare, datadog, twilio, mongodb, pinterest, reddit, asana, airtable, gitlab, dropbox, brex, gusto, instacart, chime, samsara, okta, elastic, squarespace, peloton, justworks, betterment, oscar, togetherai, nuro]
+lever: [palantir, mistral, spotify, zoox]
+ashby: [plaid, openai, cohere, notion, linear, perplexity, harvey, sierra, decagon, elevenlabs, langchain, pinecone, replit, cursor, modal, baseten, writer, mercor, finch, distyl, avoca, cognition, vapi, snowflake, vercel]
+
+# Shown instead of a name built from the slug.
+display_names: {openai: OpenAI, elevenlabs: ElevenLabs, langchain: LangChain, scaleai: Scale AI, togetherai: Together AI, gitlab: GitLab, mongodb: MongoDB}
+
+# Large employers you have applied to that use Workday. These are searched by the phrases below.
+workday_searches: ["AI engineer", "machine learning engineer", "software engineer"]
+workday:
+  - {company: NVIDIA, tenant: nvidia, dc: wd5, site: NVIDIAExternalCareerSite}
+  - {company: Capital One, tenant: capitalone, dc: wd12, site: Capital_One}
+  - {company: Salesforce, tenant: salesforce, dc: wd12, site: External_Career_Site}
+  - {company: Citi, tenant: citi, dc: wd5, site: "2"}
+  - {company: Qualcomm, tenant: qualcomm, dc: wd12, site: External}
+  - {company: Thomson Reuters, tenant: thomsonreuters, dc: wd5, site: External_Career_Site}
+  - {company: Home Depot, tenant: homedepot, dc: wd5, site: CareerDepot}
+  - {company: CVS Health, tenant: cvshealth, dc: wd1, site: CVS_Health_Careers}
+
+# Paid or limited job-site searches. Each runs at 6am, noon, 6pm and midnight New York time, and from the
+# Check now button. Every search starts from the last successful search of that same phrase.
+search_schedule:
+  every_hours: 6
+  # Check now skips these searches if they ran this recently. The free sources still run.
+  manual_cooldown_minutes: 30
+  # LinkedIn can list a job a little late, so each search reaches back slightly before the last one.
+  overlap_minutes: 30
+
+# Used only once APIFY_TOKEN is set.
+apify_linkedin:
+  actor: curious_coder~linkedin-jobs-scraper
+  location: United States
+  per_search_limit: 18
+  # Hard ceiling on paid results per day, including Check now. At the listed $0.002 per result,
+  # 288 a day is about $17 a month at most. If it is reached, the next day's search catches up.
+  daily_result_budget: 288
+  searches: ["Applied AI Engineer", "AI Engineer LLM agents", "Machine Learning Engineer", "Software Engineer AI"]
+
+# Indeed is searched with the same APIFY_TOKEN. It only accepts 1, 3, 7, or 14 day windows, so a search can return
+# jobs already collected. Those are recognized and not repeated. Results cost a hundredth of LinkedIn's price, so the
+# limits are higher: 1,600 a day is about $4.80 a month at most.
+apify_indeed:
+  actor: curious_coder~indeed-scraper
+  location: United States
+  per_search_limit: 100
+  daily_result_budget: 1600
+  searches: ["Applied AI Engineer", "AI Engineer LLM agents", "Machine Learning Engineer", "Software Engineer AI"]
+
+# Used only once RAPIDAPI_KEY is set. Covers Google for Jobs. One title is searched per run, in turn.
+jsearch:
+  monthly_request_cap: 200
+  searches: ["Applied AI Engineer", "AI Engineer", "Machine Learning Engineer", "Software Engineer AI"]

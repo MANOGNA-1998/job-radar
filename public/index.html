@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Radar</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #edf1f7; --ink: #16233b; --soft: #55627a; --line: #d3dbe7; --raised: #f8fafd;
+  --hot: #1746e0; --warm: #4a6adf; --mild: #7a8bb5; --cold: #929cae;
+  --good: #0b7a53; --warn: #a35a00; --danger: #b3261e; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #101826; --ink: #e7ecf4; --soft: #a2adc0; --line: #2a3648; --raised: #182233;
+  --hot: #86a6ff; --warm: #7390e6; --mild: #7f8cab; --cold: #6b768c;
+  --good: #5ed3a6; --warn: #e8ad62; --danger: #ff9d94; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #101826; --ink: #e7ecf4; --soft: #a2adc0; --line: #2a3648; --raised: #182233;
+  --hot: #86a6ff; --warm: #7390e6; --mild: #7f8cab; --cold: #6b768c;
+  --good: #5ed3a6; --warn: #e8ad62; --danger: #ff9d94; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.5 "Instrument Sans", system-ui, sans-serif; }
+main { max-width: 1040px; margin: 0 auto; padding: 40px 32px 96px; }
+h1, h2 { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 700; margin: 0; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--hot); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+.headline { font-size: clamp(2.1rem, 6vw, 3.6rem); line-height: 1.04; letter-spacing: -0.02em; max-width: 18ch; }
+.vitals { margin: 14px 0 0; color: var(--soft); }
+.vitals button { background: none; border: 0; padding: 0; text-decoration: underline; color: var(--warn); }
+.vitals.stale { color: var(--danger); font-weight: 600; }
+.signout { float: right; background: none; border: 0; color: var(--soft); text-decoration: underline; padding: 4px 0; }
+.run { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 16px 0 0; }
+.run button { background: var(--ink); color: var(--bg); border: 0; border-radius: 6px; padding: 8px 14px; font-weight: 600; }
+.run button[disabled] { opacity: 0.6; cursor: progress; }
+.run span { color: var(--soft); font-size: 0.92rem; }
+.failing { margin: 12px 0 0; padding: 12px 16px; background: var(--raised); border-radius: 6px; color: var(--soft); font-size: 0.9rem; }
+.failing ul { margin: 6px 0 0; padding-left: 18px; }
+
+.tabs { display: flex; flex-wrap: wrap; gap: 22px; margin: 36px 0 0; border-bottom: 1px solid var(--line); }
+.tabs button { background: none; border: 0; padding: 8px 0 10px; color: var(--soft); font-weight: 500; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--hot); font-weight: 600; }
+.tabs small { font-size: 0.85em; margin-left: 3px; }
+
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin: 18px 0 8px; }
+.controls input[type="search"], .controls select { background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; }
+.controls input[type="search"] { flex: 1 1 220px; min-width: 0; }
+.sort { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.sort button { background: var(--raised); border: 0; padding: 8px 12px; color: var(--soft); }
+.sort button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.check { display: inline-flex; align-items: center; gap: 7px; color: var(--soft); }
+
+.day { margin-top: 44px; }
+.day h2 { font-size: 1.5rem; letter-spacing: -0.01em; }
+.day h2 small { font: 400 0.95rem "Instrument Sans", system-ui, sans-serif; color: var(--soft); margin-left: 8px; letter-spacing: 0; }
+
+.job { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 4px 20px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.age { font: 700 2rem/1 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; padding-top: 2px; }
+.age.hot { color: var(--hot); } .age.warm { color: var(--warm); } .age.mild { color: var(--mild); } .age.cold { color: var(--cold); font-weight: 500; }
+.title { font-size: 1.1rem; font-weight: 600; line-height: 1.3; }
+.title a { text-decoration: none; }
+.title a:hover { text-decoration: underline; }
+.where { color: var(--ink); }
+.why { color: var(--soft); font-size: 0.92rem; }
+.tags { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--soft); font-size: 0.86rem; margin-top: 3px; }
+.tags .flag { color: var(--warn); }
+.tags .done { color: var(--good); font-weight: 600; }
+.side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; min-width: 196px; }
+.score { font-weight: 600; font-variant-numeric: tabular-nums; }
+.score small { font-weight: 400; color: var(--soft); }
+.actions { display: flex; gap: 6px; }
+.actions button { background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font-size: 0.86rem; }
+.actions button:hover { border-color: var(--ink); }
+.actions .primary { background: var(--ink); border-color: var(--ink); color: var(--bg); font-weight: 600; }
+
+.empty { margin-top: 56px; color: var(--soft); max-width: 52ch; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; gap: 14px; align-items: center; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px; max-width: calc(100vw - 32px); z-index: 5; }
+.toast button { background: none; border: 0; color: inherit; text-decoration: underline; font-weight: 600; padding: 0; }
+
+.login { max-width: 420px; margin: 16vh auto 0; padding: 0 16px; }
+.login h1 { font-size: 3rem; letter-spacing: -0.02em; }
+.login p { color: var(--soft); }
+.login label { display: block; font-weight: 500; margin: 22px 0 6px; }
+.login input { width: 100%; background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 11px 12px; }
+.login button { margin-top: 14px; width: 100%; background: var(--ink); color: var(--bg); border: 0; border-radius: 6px; padding: 11px; font-weight: 600; }
+.login .error { color: var(--danger); margin: 12px 0 0; }
+
+@media (max-width: 720px) {
+  main { padding: 24px 16px 96px; }
+  .job { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+  .age { font-size: 1.5rem; }
+  .side { flex-direction: row; justify-content: space-between; align-items: center; min-width: 0; margin-top: 8px; flex-wrap: wrap; }
+  .tabs { gap: 16px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .job.leaving { opacity: 0; transition: opacity 160ms ease; }
+}
+</style>
+</head>
+<body>
+<div class="login" id="login" hidden>
+  <h1>Job Radar</h1>
+  <form id="login-form">
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <button type="submit">Sign in</button>
+    <p class="error" id="login-error" role="alert" hidden></p>
+  </form>
+</div>
+<main id="app" hidden>
+  <button class="signout" id="signout">Sign out</button>
+  <h1 class="headline" id="headline" aria-live="polite">Loading</h1>
+  <p class="vitals" id="vitals"></p>
+  <div class="run">
+    <button id="run-now" type="button">Check now</button>
+    <span id="run-note" role="status"></span>
+  </div>
+  <div class="failing" id="failing" hidden></div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="controls">
+    <input type="search" id="search" placeholder="Search title, company, or location" aria-label="Search jobs">
+    <select id="tier" aria-label="Role type"><option value="">All role types</option></select>
+    <div class="sort" role="group" aria-label="Sort order">
+      <button data-sort="newest" aria-pressed="true">Newest</button>
+      <button data-sort="best" aria-pressed="false">Best match</button>
+    </div>
+    <label class="check"><input type="checkbox" id="near"> NYC or remote only</label>
+  </div>
+  <div id="list"></div>
+  <p class="empty" id="empty" hidden></p>
+</main>
+<div class="toast" id="toast" role="status" hidden></div>
+<script>
+const ZONE = 'America/New_York';
+const TABS = [
+  ['new', 'To review'], ['applied', 'Applied'], ['interviewing', 'Interviewing'], ['skipped', 'Skipped'], ['not_fit', 'Not a fit'],
+];
+const SOURCES = { greenhouse: 'Employer site', lever: 'Employer site', ashby: 'Employer site', workday: 'Employer site', linkedin: 'LinkedIn', indeed: 'Indeed', jsearch: 'Google for Jobs' };
+const state = { status: 'new', sort: 'newest', search: '', tier: '', near: false, data: null };
+const $ = (id) => document.getElementById(id);
+
+function remember() { try { localStorage.setItem('jr', JSON.stringify({ sort: state.sort, near: state.near })); } catch {} }
+try { Object.assign(state, JSON.parse(localStorage.getItem('jr') || '{}')); } catch {}
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(attrs)) {
+    if (key === 'class') node.className = value;
+    else if (key.startsWith('on')) node.addEventListener(key.slice(2), value);
+    else node.setAttribute(key, value);
+  }
+  node.append(...children.filter((child) => child !== null && child !== undefined));
+  return node;
+}
+const safeUrl = (url) => (/^https:\/\//.test(url || '') ? url : '#');
+const dayKey = (date) => new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(date);
+const shortDate = (date) => new Intl.DateTimeFormat('en-US', { timeZone: ZONE, month: 'short', day: 'numeric' }).format(date);
+const longDate = (date) => new Intl.DateTimeFormat('en-US', { timeZone: ZONE, weekday: 'long', month: 'short', day: 'numeric' }).format(date);
+
+function ago(date) {
+  const minutes = Math.max(0, Math.floor((Date.now() - date) / 60000));
+  if (minutes < 60) return `${Math.max(minutes, 1)}m`;
+  if (minutes < 60 * 48) return `${Math.floor(minutes / 60)}h`;
+  return `${Math.floor(minutes / 1440)}d`;
+}
+function heat(date) {
+  const hours = (Date.now() - date) / 3600000;
+  return hours < 6 ? 'hot' : hours < 24 ? 'warm' : hours < 72 ? 'mild' : 'cold';
+}
+function bucket(date) {
+  if (Date.now() - date < 6 * 3600000) return 'Last 6 hours';
+  const today = dayKey(new Date());
+  const key = dayKey(date);
+  if (key === today) return 'Earlier today';
+  if (key === dayKey(new Date(Date.now() - 86400000))) return 'Yesterday';
+  return longDate(date);
+}
+
+function visible() {
+  const words = state.search.toLowerCase().split(/\s+/).filter(Boolean);
+  return state.data.jobs.filter((job) => {
+    const text = `${job.title} ${job.company} ${job.location || ''}`.toLowerCase();
+    if (!words.every((word) => text.includes(word))) return false;
+    if (state.tier && job.tier !== state.tier) return false;
+    if (state.near && !/new york|nyc|manhattan|brooklyn|jersey city|hoboken|remote|anywhere/i.test(job.location || '')) return false;
+    return true;
+  });
+}
+
+function jobRow(job) {
+  const fresh = new Date(job.fresh_at);
+  const found = new Date(job.first_seen_at);
+  const dateTags = [];
+  if (job.date_basis === 'alert') dateTags.push(`Found ${shortDate(fresh)}`);
+  else if (job.date_basis === 'posted') dateTags.push(`Posted ${shortDate(fresh)}`);
+  else dateTags.push(`Found ${shortDate(found)}, no post date listed`);
+  if (job.date_basis !== 'alert' && found - fresh > 3600000 * 12 && Date.now() - found < 3600000 * 72) dateTags.push(`we found it ${ago(found)} ago`);
+
+  const tags = el('div', { class: 'tags' }, el('span', {}, dateTags.join(', ')), el('span', {}, SOURCES[job.source] || job.source));
+  for (const alt of job.alt_urls || []) {
+    const site = /linkedin\.com/.test(alt) ? 'LinkedIn' : /indeed\.com/.test(alt) ? 'Indeed' : '';
+    if (site) tags.append(el('a', { href: safeUrl(alt), target: '_blank', rel: 'noopener noreferrer' }, `Also on ${site}`));
+  }
+  if (job.possible_repost) tags.append(el('span', { class: 'flag' }, 'Possible repost'));
+  if (job.closed_at) tags.append(el('span', { class: 'flag' }, 'No longer listed'));
+  if (job.applied_at) tags.append(el('span', { class: 'done' }, `Applied ${shortDate(new Date(job.applied_at))}`));
+
+  const row = el('article', { class: 'job' });
+  const move = (status) => () => setStatus(job, status, row);
+  const actions = el('div', { class: 'actions' });
+  const button = (label, status, primary) => actions.append(el('button', { class: primary ? 'primary' : '', onclick: move(status) }, label));
+  if (job.status === 'new') { button('Applied', 'applied', true); button('Skip', 'skipped'); button('Not a fit', 'not_fit'); }
+  else if (job.status === 'applied') { button('Interviewing', 'interviewing', true); button('Back to review', 'new'); }
+  else if (job.status === 'interviewing') { button('Back to applied', 'applied'); }
+  else { button('Back to review', 'new'); }
+
+  row.append(
+    el('div', { class: `age ${heat(fresh)}`, title: fresh.toLocaleString('en-US', { timeZone: ZONE }) }, ago(fresh)),
+    el('div', {},
+      el('div', { class: 'title' }, el('a', { href: safeUrl(job.url), target: '_blank', rel: 'noopener noreferrer' }, job.title)),
+      el('div', { class: 'where' }, [job.company, job.location].filter(Boolean).join(', ')),
+      el('div', { class: 'why' }, job.reason),
+      tags,
+    ),
+    el('div', { class: 'side' }, el('div', { class: 'score' }, String(job.score), el('small', {}, ' match')), actions),
+  );
+  return row;
+}
+
+function render() {
+  const { counts, health } = state.data;
+  const fresh = state.data.freshCount;
+  $('headline').textContent = state.status === 'new'
+    ? (fresh === 1 ? '1 new role in the last 6 hours' : fresh ? `${fresh} new roles in the last 6 hours` : 'Nothing new in the last 6 hours')
+    : TABS.find(([key]) => key === state.status)[1];
+
+  const vitals = $('vitals');
+  vitals.replaceChildren();
+  vitals.className = 'vitals';
+  if (health.lastRunAt) {
+    const last = new Date(health.lastRunAt);
+    const stale = Date.now() - last > 3600000;
+    if (stale) vitals.className = 'vitals stale';
+    vitals.append(`${stale ? 'Collection may have stopped. Last checked' : 'Last checked'} ${ago(last)} ago, watching ${health.watching} job boards.`);
+  } else {
+    vitals.append('Waiting for the first collection to finish.');
+  }
+  const problems = health.failing.length + health.sourceErrors.length + health.warnings.length;
+  if (problems) {
+    vitals.append(' ', el('button', { onclick: () => { $('failing').hidden = !$('failing').hidden; } }, problems === 1 ? '1 issue to review' : `${problems} issues to review`));
+    const items = el('ul');
+    for (const board of health.failing) items.append(el('li', {}, `${board.company || board.slug} (${board.ats}): ${board.last_error}`));
+    for (const error of health.sourceErrors) items.append(el('li', {}, error));
+    for (const warning of health.warnings) items.append(el('li', {}, warning));
+    $('failing').replaceChildren('The other sources keep running. Fix wrong entries or raise limits in config/boards.yaml.', items);
+  } else {
+    $('failing').hidden = true;
+  }
+
+  renderRun();
+
+  $('tabs').replaceChildren(...TABS.map(([key, label]) => el('button', {
+    role: 'tab', 'aria-selected': String(state.status === key), onclick: () => { state.status = key; state.tier = ''; load(); },
+  }, label, el('small', {}, String(counts[key] || 0)))));
+
+  const tiers = [...new Set(state.data.jobs.map((job) => job.tier))].sort();
+  $('tier').replaceChildren(el('option', { value: '' }, 'All role types'), ...tiers.map((tier) => el('option', { value: tier }, tier)));
+  $('tier').value = state.tier;
+  document.querySelectorAll('.sort button').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.sort === state.sort)));
+  $('near').checked = state.near;
+
+  const jobs = visible();
+  const groups = new Map();
+  for (const job of jobs) {
+    const name = bucket(new Date(job.fresh_at));
+    if (!groups.has(name)) groups.set(name, []);
+    groups.get(name).push(job);
+  }
+  const byNewest = (a, b) => new Date(b.fresh_at) - new Date(a.fresh_at);
+  const byBest = (a, b) => b.score - a.score || byNewest(a, b);
+  $('list').replaceChildren(...[...groups].map(([name, group]) => el('section', { class: 'day' },
+    el('h2', {}, name, el('small', {}, group.length === 1 ? '1 role' : `${group.length} roles`)),
+    ...group.sort(state.sort === 'best' ? byBest : byNewest).map(jobRow),
+  )));
+
+  const empty = $('empty');
+  empty.hidden = jobs.length > 0;
+  if (!jobs.length) {
+    const filtering = state.search || state.tier || state.near;
+    empty.textContent = filtering ? 'No roles match these filters. Clear the search or filters to see the rest.'
+      : state.status === 'new' ? 'New matches appear here as soon as the next collection finds them.'
+      : 'Jobs you move here will stay on this list.';
+  }
+}
+
+async function api(path, options) {
+  const response = await fetch(path, options);
+  if (response.status === 401) { showLogin(); throw new Error('signed out'); }
+  const body = await response.json();
+  if (!response.ok) throw new Error(body.error || 'Request failed.');
+  return body;
+}
+
+async function load() {
+  try {
+    const data = await api(`/api/jobs?status=${state.status}`);
+    data.freshCount = state.status === 'new' ? data.jobs.filter((job) => Date.now() - new Date(job.fresh_at) < 6 * 3600000).length : 0;
+    state.data = data;
+    $('login').hidden = true;
+    $('app').hidden = false;
+    render();
+  } catch (error) {
+    if (error.message !== 'signed out') toast(`${error.message} Refresh to try again.`);
+  }
+}
+
+const NAMES = { applied: 'Marked applied.', interviewing: 'Moved to interviewing.', skipped: 'Skipped.', not_fit: 'Marked not a fit.', new: 'Moved back to review.' };
+async function setStatus(job, status, row) {
+  const previous = job.status;
+  row.classList.add('leaving');
+  try {
+    await api('/api/job-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: job.id, status }) });
+    toast(NAMES[status], async () => {
+      await api('/api/job-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: job.id, status: previous }) });
+      load();
+    });
+    load();
+  } catch (error) {
+    row.classList.remove('leaving');
+    if (error.message !== 'signed out') toast(error.message);
+  }
+}
+
+const RUN_KEY = 'jr-run-requested';
+const RUN_TIMEOUT = 10 * 60000;
+let runPoll;
+function runRequested() { try { return Number(localStorage.getItem(RUN_KEY)) || 0; } catch { return state.runAt || 0; } }
+function setRunRequested(value) {
+  state.runAt = value;
+  try { if (value) localStorage.setItem(RUN_KEY, String(value)); else localStorage.removeItem(RUN_KEY); } catch {}
+}
+function paidNote(paid = {}) {
+  const words = { searched: 'searched', not_due: 'not due yet', cooldown: 'skipped because it ran in the last 30 minutes', daily_limit: 'paused until tomorrow, daily limit reached', monthly_limit: 'paused, monthly limit reached', failed: 'failed and will retry' };
+  const parts = [];
+  if (paid.linkedin && paid.linkedin !== 'off') parts.push(`LinkedIn ${words[paid.linkedin] || paid.linkedin}`);
+  if (paid.indeed && paid.indeed !== 'off') parts.push(`Indeed ${words[paid.indeed] || paid.indeed}`);
+  if (paid.jsearch && paid.jsearch !== 'off') parts.push(`Google for Jobs ${words[paid.jsearch] || paid.jsearch}`);
+  return parts.join(', ');
+}
+function renderRun() {
+  const { health } = state.data;
+  const requested = runRequested();
+  const manual = health.lastManual;
+  const button = $('run-now');
+  const note = $('run-note');
+  const seen = [];
+  if (health.searched.linkedin) seen.push(`LinkedIn searched ${ago(new Date(health.searched.linkedin))} ago`);
+  if (health.searched.indeed) seen.push(`Indeed searched ${ago(new Date(health.searched.indeed))} ago`);
+  if (health.searched.jsearch) seen.push(`Google for Jobs searched ${ago(new Date(health.searched.jsearch))} ago`);
+  if (requested) {
+    const started = manual && new Date(manual.started_at).getTime() >= requested - 60000;
+    if (started && manual.finished_at) {
+      setRunRequested(0);
+      clearInterval(runPoll);
+      runPoll = null;
+      const added = manual.stats.inserted || 0;
+      const detail = paidNote(manual.stats.paid);
+      toast(`Check finished. ${added === 1 ? '1 new role' : `${added} new roles`}.${detail ? ` ${detail}.` : ''}`);
+    } else if (Date.now() - requested > RUN_TIMEOUT) {
+      setRunRequested(0);
+      clearInterval(runPoll);
+      runPoll = null;
+      button.disabled = false;
+      note.textContent = 'This check is taking longer than expected. Look at the Actions tab in GitHub for details.';
+      return;
+    } else {
+      button.disabled = true;
+      button.textContent = 'Checking';
+      note.textContent = 'New roles usually appear within a few minutes. You can keep working.';
+      if (!runPoll) runPoll = setInterval(load, 20000);
+      return;
+    }
+  }
+  button.disabled = false;
+  button.textContent = 'Check now';
+  note.textContent = seen.join(', ');
+}
+$('run-now').addEventListener('click', async () => {
+  const button = $('run-now');
+  button.disabled = true;
+  try {
+    const started = await api('/api/run-now', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    setRunRequested(new Date(started.requestedAt).getTime());
+    renderRun();
+  } catch (error) {
+    button.disabled = false;
+    if (error.message !== 'signed out') toast(error.message);
+  }
+});
+
+let toastTimer;
+function toast(message, undo) {
+  const node = $('toast');
+  node.replaceChildren(el('span', {}, message));
+  if (undo) node.append(el('button', { onclick: () => { node.hidden = true; undo(); } }, 'Undo'));
+  node.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { node.hidden = true; }, 6000);
+}
+
+function showLogin() { $('app').hidden = true; $('login').hidden = false; $('password').focus(); }
+
+$('login-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const error = $('login-error');
+  error.hidden = true;
+  const response = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: $('password').value }) });
+  if (response.ok) { $('password').value = ''; load(); return; }
+  error.textContent = (await response.json()).error;
+  error.hidden = false;
+});
+$('signout').addEventListener('click', async () => {
+  await fetch('/api/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  showLogin();
+});
+$('search').addEventListener('input', (event) => { state.search = event.target.value; render(); });
+$('tier').addEventListener('change', (event) => { state.tier = event.target.value; render(); });
+$('near').addEventListener('change', (event) => { state.near = event.target.checked; remember(); render(); });
+document.querySelectorAll('.sort button').forEach((button) => button.addEventListener('click', () => { state.sort = button.dataset.sort; remember(); render(); }));
+
+load();
+setInterval(() => { if (!$('app').hidden && !document.hidden) load(); }, 5 * 60000);
+</script>
+</body>
+</html>
