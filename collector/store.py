@@ -19,7 +19,11 @@ AGGREGATORS = ["linkedin", "indeed", "jsearch"]
 
 def connect() -> psycopg.Connection:
     # prepare_threshold=None keeps this compatible with Supabase's connection pooler.
-    return psycopg.connect(os.environ["DATABASE_URL"], row_factory=dict_row, prepare_threshold=None, autocommit=True)
+    try:
+        return psycopg.connect(os.environ["DATABASE_URL"], row_factory=dict_row, prepare_threshold=None, autocommit=True)
+    except psycopg.Error as exc:
+        # The driver's message can quote part of the connection string, and Actions logs on a public repo are public.
+        raise SystemExit(f"Could not connect to the database ({type(exc).__name__}). Check the DATABASE_URL secret.") from None
 
 
 def init(conn) -> None:

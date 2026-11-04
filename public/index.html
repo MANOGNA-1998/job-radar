@@ -129,6 +129,10 @@ a { color: inherit; }
   <div class="controls">
     <input type="search" id="search" placeholder="Search title, company, or location" aria-label="Search jobs">
     <select id="tier" aria-label="Role type"><option value="">All role types</option></select>
+    <select id="minscore" aria-label="Minimum match">
+      <option value="0">Any match</option><option value="90">90+ match</option><option value="80">80+ match</option>
+      <option value="70">70+ match</option><option value="60">60+ match</option>
+    </select>
     <div class="sort" role="group" aria-label="Sort order">
       <button data-sort="newest" aria-pressed="true">Newest</button>
       <button data-sort="best" aria-pressed="false">Best match</button>
@@ -145,10 +149,10 @@ const TABS = [
   ['new', 'To review'], ['applied', 'Applied'], ['interviewing', 'Interviewing'], ['skipped', 'Skipped'], ['not_fit', 'Not a fit'],
 ];
 const SOURCES = { greenhouse: 'Employer site', lever: 'Employer site', ashby: 'Employer site', workday: 'Employer site', linkedin: 'LinkedIn', indeed: 'Indeed', jsearch: 'Google for Jobs' };
-const state = { status: 'new', sort: 'newest', search: '', tier: '', near: false, data: null };
+const state = { status: 'new', sort: 'newest', search: '', tier: '', near: false, min: 0, data: null };
 const $ = (id) => document.getElementById(id);
 
-function remember() { try { localStorage.setItem('jr', JSON.stringify({ sort: state.sort, near: state.near })); } catch {} }
+function remember() { try { localStorage.setItem('jr', JSON.stringify({ sort: state.sort, near: state.near, min: state.min })); } catch {} }
 try { Object.assign(state, JSON.parse(localStorage.getItem('jr') || '{}')); } catch {}
 
 function el(tag, attrs = {}, ...children) {
@@ -191,6 +195,7 @@ function visible() {
     const text = `${job.title} ${job.company} ${job.location || ''}`.toLowerCase();
     if (!words.every((word) => text.includes(word))) return false;
     if (state.tier && job.tier !== state.tier) return false;
+    if (job.score < state.min) return false;
     if (state.near && !/new york|nyc|manhattan|brooklyn|jersey city|hoboken|remote|anywhere/i.test(job.location || '')) return false;
     return true;
   });
@@ -277,6 +282,7 @@ function render() {
   $('tier').value = state.tier;
   document.querySelectorAll('.sort button').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.sort === state.sort)));
   $('near').checked = state.near;
+  $('minscore').value = String(state.min);
 
   const jobs = visible();
   const groups = new Map();
@@ -295,7 +301,7 @@ function render() {
   const empty = $('empty');
   empty.hidden = jobs.length > 0;
   if (!jobs.length) {
-    const filtering = state.search || state.tier || state.near;
+    const filtering = state.search || state.tier || state.near || state.min;
     empty.textContent = filtering ? 'No roles match these filters. Clear the search or filters to see the rest.'
       : state.status === 'new' ? 'New matches appear here as soon as the next collection finds them.'
       : 'Jobs you move here will stay on this list.';
@@ -434,6 +440,7 @@ $('signout').addEventListener('click', async () => {
 });
 $('search').addEventListener('input', (event) => { state.search = event.target.value; render(); });
 $('tier').addEventListener('change', (event) => { state.tier = event.target.value; render(); });
+$('minscore').addEventListener('change', (event) => { state.min = Number(event.target.value); remember(); render(); });
 $('near').addEventListener('change', (event) => { state.near = event.target.checked; remember(); render(); });
 document.querySelectorAll('.sort button').forEach((button) => button.addEventListener('click', () => { state.sort = button.dataset.sort; remember(); render(); }));
 
