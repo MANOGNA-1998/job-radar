@@ -39,16 +39,6 @@ apify_linkedin:
   daily_result_budget: 288
   searches: ["Applied AI Engineer", "AI Engineer LLM agents", "Machine Learning Engineer", "Software Engineer AI"]
 
-# Indeed is searched with the same APIFY_TOKEN. It only accepts 1, 3, 7, or 14 day windows, so a search can return
-# jobs already collected. Those are recognized and not repeated. Results cost a hundredth of LinkedIn's price, so the
-# limits are higher: 1,600 a day is about $4.80 a month at most.
-apify_indeed:
-  actor: curious_coder~indeed-scraper
-  location: United States
-  per_search_limit: 100
-  daily_result_budget: 1600
-  searches: ["Applied AI Engineer", "AI Engineer LLM agents", "Machine Learning Engineer", "Software Engineer AI"]
-
 # Used only once RAPIDAPI_KEY is set. Covers Google for Jobs. One title is searched per run, in turn.
 jsearch:
   monthly_request_cap: 200

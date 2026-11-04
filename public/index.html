@@ -49,6 +49,9 @@ a { color: inherit; }
 .tabs { display: flex; flex-wrap: wrap; gap: 22px; margin: 36px 0 0; border-bottom: 1px solid var(--line); }
 .tabs button { background: none; border: 0; padding: 8px 0 10px; color: var(--soft); font-weight: 500; border-bottom: 3px solid transparent; margin-bottom: -1px; }
 .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--hot); font-weight: 600; }
+.sources { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin: 4px 0 8px; color: var(--soft); }
+.sources .label { font-weight: 600; }
+.sources small { color: var(--soft); }
 .tabs small { font-size: 0.85em; margin-left: 3px; }
 
 .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin: 18px 0 8px; }
@@ -139,6 +142,7 @@ a { color: inherit; }
     </div>
     <label class="check"><input type="checkbox" id="near"> NYC or remote only</label>
   </div>
+  <div class="sources" id="sources" aria-label="Sources"></div>
   <div id="list"></div>
   <p class="empty" id="empty" hidden></p>
 </main>
@@ -149,10 +153,11 @@ const TABS = [
   ['new', 'To review'], ['applied', 'Applied'], ['interviewing', 'Interviewing'], ['skipped', 'Skipped'], ['not_fit', 'Not a fit'],
 ];
 const SOURCES = { greenhouse: 'Employer site', lever: 'Employer site', ashby: 'Employer site', workday: 'Employer site', linkedin: 'LinkedIn', indeed: 'Indeed', jsearch: 'Google for Jobs' };
-const state = { status: 'new', sort: 'newest', search: '', tier: '', near: false, min: 0, data: null };
+const state = { status: 'new', sort: 'newest', search: '', tier: '', near: false, min: 0, off: ['Indeed'], data: null };
+const sourceName = (job) => SOURCES[job.source] || job.source;
 const $ = (id) => document.getElementById(id);
 
-function remember() { try { localStorage.setItem('jr', JSON.stringify({ sort: state.sort, near: state.near, min: state.min })); } catch {} }
+function remember() { try { localStorage.setItem('jr', JSON.stringify({ sort: state.sort, near: state.near, min: state.min, off: state.off })); } catch {} }
 try { Object.assign(state, JSON.parse(localStorage.getItem('jr') || '{}')); } catch {}
 
 function el(tag, attrs = {}, ...children) {
@@ -196,6 +201,7 @@ function visible() {
     if (!words.every((word) => text.includes(word))) return false;
     if (state.tier && job.tier !== state.tier) return false;
     if (job.score < state.min) return false;
+    if (state.off.includes(sourceName(job))) return false;
     if (state.near && !/new york|nyc|manhattan|brooklyn|jersey city|hoboken|remote|anywhere/i.test(job.location || '')) return false;
     return true;
   });
@@ -210,7 +216,7 @@ function jobRow(job) {
   else dateTags.push(`Found ${shortDate(found)}, no post date listed`);
   if (job.date_basis !== 'alert' && found - fresh > 3600000 * 12 && Date.now() - found < 3600000 * 72) dateTags.push(`we found it ${ago(found)} ago`);
 
-  const tags = el('div', { class: 'tags' }, el('span', {}, dateTags.join(', ')), el('span', {}, SOURCES[job.source] || job.source));
+  const tags = el('div', { class: 'tags' }, el('span', {}, dateTags.join(', ')), el('span', {}, sourceName(job)));
   for (const alt of job.alt_urls || []) {
     const site = /linkedin\.com/.test(alt) ? 'LinkedIn' : /indeed\.com/.test(alt) ? 'Indeed' : '';
     if (site) tags.append(el('a', { href: safeUrl(alt), target: '_blank', rel: 'noopener noreferrer' }, `Also on ${site}`));
@@ -283,6 +289,18 @@ function render() {
   document.querySelectorAll('.sort button').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.sort === state.sort)));
   $('near').checked = state.near;
   $('minscore').value = String(state.min);
+  const counts2 = new Map();
+  for (const job of state.data.jobs) counts2.set(sourceName(job), (counts2.get(sourceName(job)) || 0) + 1);
+  for (const name of state.off) if (!counts2.has(name)) counts2.set(name, 0);
+  $('sources').replaceChildren(el('span', { class: 'label' }, 'Sources'), ...[...counts2].sort().map(([name, count]) => {
+    const box = el('input', { type: 'checkbox' });
+    box.checked = !state.off.includes(name);
+    box.addEventListener('change', () => {
+      state.off = box.checked ? state.off.filter((n) => n !== name) : [...state.off, name];
+      remember(); render();
+    });
+    return el('label', { class: 'check' }, box, ` ${name} `, el('small', {}, String(count)));
+  }));
 
   const jobs = visible();
   const groups = new Map();
@@ -301,7 +319,7 @@ function render() {
   const empty = $('empty');
   empty.hidden = jobs.length > 0;
   if (!jobs.length) {
-    const filtering = state.search || state.tier || state.near || state.min;
+    const filtering = state.search || state.tier || state.near || state.min || state.off.length;
     empty.textContent = filtering ? 'No roles match these filters. Clear the search or filters to see the rest.'
       : state.status === 'new' ? 'New matches appear here as soon as the next collection finds them.'
       : 'Jobs you move here will stay on this list.';

@@ -47,7 +47,7 @@ Open the site on your phone or computer and sign in.
 
 These cover companies that are not on your list. Both are off until their key is added.
 
-**LinkedIn and Indeed through Apify (paid):** add a GitHub secret named `APIFY_TOKEN`. One token covers both. These read logged-out pages only, and both sites' terms may prohibit scraping, so I have not checked Indeed's. Never add your LinkedIn or Indeed login to this project.
+**LinkedIn through Apify (paid):** add a GitHub secret named `APIFY_TOKEN`. This reads logged-out pages only, and LinkedIn's terms prohibit scraping. Never add your LinkedIn login to this project.
 
 **Google for Jobs through JSearch (free tier):** subscribe to the free Basic plan of JSearch on RapidAPI, then add a GitHub secret named `RAPIDAPI_KEY`.
 
@@ -70,12 +70,11 @@ These cover companies that are not on your list. Both are off until their key is
 | Company career pages | Every 15 minutes | Free |
 | LinkedIn alert emails | Every 15 minutes | Free |
 | LinkedIn through Apify | Midnight, 6am, noon, 6pm New York time, plus Check now | $0.002 per result, about $17 a month at most |
-| Indeed through Apify | Same times | $0.0001 per result, about $5 a month at most |
 | Google for Jobs through JSearch | Same times, one title per run in turn | Free, 200 requests a month |
 
 - **Each search continues from the last one.** It looks back to that title's last successful search, plus 30 minutes in case a job was listed late. If a search fails or is skipped, the next one covers the gap, up to 7 days.
 - **Check now** runs every free source right away. Job-site searches run too, unless they ran in the last 30 minutes.
-- **Limits:** LinkedIn stops at 288 results a day and Indeed at 1,600, each including Check now. Indeed only accepts 1, 3, 7, or 14 day windows, so it may return jobs already collected. Those are recognized and not repeated. Indeed listings that hide the employer's name are skipped. JSearch keeps enough requests for the month's scheduled runs, so Check now uses only the spare ones.
+- **Limits:** LinkedIn stops at 288 results a day, including Check now. JSearch keeps enough requests for the month's scheduled runs, so Check now uses only the spare ones.
 - **If a search fills its 18 results,** the dashboard warns that some roles may be missing. Raise `per_search_limit` in `config/boards.yaml`, and raise `daily_result_budget` to match if needed.
 
 ## Changing what it collects
