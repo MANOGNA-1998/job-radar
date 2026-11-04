@@ -156,7 +156,8 @@ def collect_apify(conn, config, profile, penalties, now, manual, stats) -> None:
             store.mark_search(conn, key, now, True)
             stats[f"{name}_apify"] += len(jobs)
             outcomes.append("searched")
-            if len(jobs) >= limit:
+            # The very first search reaches back a full day, so hitting the cap then is expected and not worth a warning.
+            if len(jobs) >= limit and state.get("last_success_at") is not None:
                 stats["warnings"].append(f'{label} search "{phrase}" hit its limit of {limit} results, so some roles may be missing.')
             ingest(conn, jobs, None, False, profile, penalties, now, stats)
         stats["paid"][name] = timing.summarize(outcomes)
