@@ -256,14 +256,14 @@ jsearch: {monthly_request_cap: 200, searches: [one, two]}
 """
 
 
-def paid_pass(project, server, manual=False, apify=True):
+def paid_pass(project, server, manual=False, apify=True, expect=0):
     env = {**os.environ, "DATABASE_URL": DSN, "JR_GREENHOUSE_HOST": server, "JR_LEVER_HOST": server, "JR_ASHBY_HOST": server,
            "JR_WORKDAY_HOST": server, "JR_APIFY_HOST": server, "JR_JSEARCH_HOST": server, "RAPIDAPI_KEY": "test",
            "JR_MANUAL": "true" if manual else "false"}
     if apify:
         env["APIFY_TOKEN"] = "test"
     done = subprocess.run([sys.executable, "-m", "collector"], cwd=project, env=env, capture_output=True, text=True, timeout=120)
-    assert done.returncode == 0, done.stderr
+    assert done.returncode == expect, done.stderr
 
 
 def last_stats(conn):
@@ -343,9 +343,10 @@ def test_failed_paid_search_keeps_its_place_and_is_reported(project, server, con
     saved = World.routes.pop(PAID_ROUTE)
     conn.execute("UPDATE search_state SET last_success_at = now() - interval '7 hours', last_attempt_at = now() - interval '7 hours'")
     before = conn.execute("SELECT last_success_at FROM search_state WHERE key = 'linkedin:a'").fetchone()["last_success_at"]
-    paid_pass(project, server)
+    paid_pass(project, server, expect=1)
     stats = last_stats(conn)["stats"]
     assert stats["paid"]["linkedin"] == "failed" and any("LinkedIn search" in e for e in stats["errors"])
+    assert any("LinkedIn search" in a for a in stats["alerts"])
     assert conn.execute("SELECT last_success_at FROM search_state WHERE key = 'linkedin:a'").fetchone()["last_success_at"] == before
     World.routes[PAID_ROUTE] = saved
 

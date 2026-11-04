@@ -146,6 +146,10 @@ def collect_apify(conn, config, profile, penalties, now, manual, stats) -> None:
                 jobs = searcher(token, settings["actor"], phrase, settings["location"], seconds, limit, now)
             except Exception as exc:  # noqa: BLE001 - the window stays put, so the next try covers this gap
                 stats["errors"].append(f"{label} search ({phrase}): {type(exc).__name__}")
+                # Only the first failure in a streak raises an alert, so a spend cap does not send an email every hour.
+                last_try, last_ok = state.get("last_attempt_at"), state.get("last_success_at")
+                if last_try is None or (last_ok is not None and last_try <= last_ok):
+                    stats["alerts"].append(f"{label} search ({phrase}) failed")
                 outcomes.append("failed")
                 continue
             store.apify_record(conn, len(jobs), day, name, now)
@@ -210,7 +214,7 @@ def run(config: dict, profile: dict) -> dict:
     now = store.now_utc()
     manual = os.environ.get("JR_MANUAL") == "true"
     stats = {"inserted": 0, "updated": 0, "merged": 0, "skipped": 0, "closed": 0, "boards_ok": 0, "boards_failed": 0,
-             "boards_discovered": 0, "linkedin_email": 0, "linkedin_apify": 0, "indeed_apify": 0, "jsearch": 0, "errors": [], "warnings": [], "paid": {}}
+             "boards_discovered": 0, "linkedin_email": 0, "linkedin_apify": 0, "indeed_apify": 0, "jsearch": 0, "errors": [], "warnings": [], "alerts": [], "paid": {}}
     with store.connect() as conn:
         store.init(conn)
         store.seed_boards(conn, config)
@@ -303,7 +307,8 @@ def main() -> int:
     stats = run(config, profile)
     # Actions logs on a public repo are public, so this prints counts only.
     print({k: (len(v) if isinstance(v, list) else v) for k, v in stats.items()})
-    return 0 if stats["boards_ok"] else 1
+    # A failed run makes GitHub email the repository owner, which is how a stopped paid search reaches you.
+    return 0 if stats["boards_ok"] and not stats["alerts"] else 1
 
 
 if __name__ == "__main__":
